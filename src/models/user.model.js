@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
       type: String,
     },
     avtar: {
-      type: string,
+      type: String,
       required: true,
     },
     coverAvtar: {

@@ -1,10 +1,8 @@
-import asyncHandler from "../utils/asyncHandeller";
-import user from "../models/user.model"
-const userRegister=asyncHandler(async(req,res,next)=>{
-
-    const {username,email}=req.body;
-    console.log(username);
-
+import asyncHandler from "../utils/asyncHandeller.js";
+import {user} from "../models/user.model.js";
+const userRegister = asyncHandler(async (req, res, next) => {
+  const { username, email } = req.body;
+  console.log(username);
 });
 
-export {userRegister};
+export { userRegister };
