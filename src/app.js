@@ -23,6 +23,11 @@ app.use(
     credentials: true,
   })
 );
-app.use(cookieParser())
+app.use(cookieParser());
 
+// import router
+
+import { router } from "./routes/user.routes";
+
+app.use("/api/v1/users", router);
 export default app;
