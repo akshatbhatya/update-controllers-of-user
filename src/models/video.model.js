@@ -10,6 +10,22 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    duration:{
+      type:String,
+      default:0
+    },
+    isPublished:{
+      type:Boolean,
+      default:true
+    },
+    videoFile:{
+      type:String,
+      required:true
+    },
+    views:{
+      type:Number,
+      default:0
+    }
   },
   { timestamps: true }
 );
