@@ -11,7 +11,7 @@ async function uploadLocalFile(localFile) {
   try {
    const data= await cloudinary.uploader.upload(localFile, { resource_type: "auto" });
     fs.unlinkSync(localFile);
-    return data
+    return data;
   } catch (error) {
     fs.unlinkSync(localFile);
   }
