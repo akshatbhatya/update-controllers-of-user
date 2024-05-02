@@ -4,6 +4,21 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import uploadLocalFile from "../utils/cloudinary.js";
 
+const generateTokens = async (userId) => {
+  try {
+    const tokens = await user.findById(userId);
+    const GeneratedAccessToken = await tokens.generateAccessToken();
+    const GeneratedRefreshToken = await tokens.generateRefreshToken();
+
+    await tokens.save({ saveBeforeValidate: false });
+    tokens.refreshToken = GeneratedRefreshToken;
+
+    return { GeneratedAccessToken, GeneratedRefreshToken };
+  } catch (error) {
+    throw new ApiError(500, "token can't be generated");
+  }
+};
+
 const userRegister = asyncHandler(async (req, res, next) => {
   const { username, email, fullName, avtar, coverAvtar, password } = req.body;
   console.log(username);
@@ -57,8 +72,8 @@ const logIn = asyncHandler(async (req, res) => {
     throw new ApiError(400, "username else email is required");
   }
 
-  if(!password){
-    throw new ApiError(400,"password is required")
+  if (!password) {
+    throw new ApiError(400, "password is required");
   }
   const isExistaceUser = await user.findOne({
     $or: [{ username }, { email }],
@@ -71,11 +86,35 @@ const logIn = asyncHandler(async (req, res) => {
   // check password
 
   const checkPassword = await isExistaceUser.comparePassword(password);
-  
-  if(!checkPassword){
-    throw new ApiError(400,"password is wrong")
+
+  if (!checkPassword) {
+    throw new ApiError(400, "password is wrong");
   }
-  res.send("ok");
+  const { GeneratedAccessToken, GeneratedRefreshToken } = await generateTokens(
+    isExistaceUser._id
+  );
+
+  const logInedUser = await user
+    .findById(isExistaceUser._id)
+    .select("-password -refreshToken");
+
+  const httpOptions = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(200)
+    .cookie("accessToken", GeneratedAccessToken, httpOptions)
+    .cookie("refreshToken", GeneratedRefreshToken, httpOptions)
+    .json(
+      new ApiResponse(200, "user logged in sucessfully", {
+        data: {
+          logInedUser,
+          GeneratedAccessToken,
+          GeneratedRefreshToken,
+        },
+      })
+    );
 });
 
 export { userRegister, logIn };
