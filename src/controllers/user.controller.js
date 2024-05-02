@@ -49,6 +49,33 @@ const userRegister = asyncHandler(async (req, res, next) => {
     .json(new ApiResponse(200, "user register succsessfully", {}));
 });
 
-const logIn = asyncHandler(async (req, res) => {});
+const logIn = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+  console.log(username, email, password);
+
+  if (!(username || email)) {
+    throw new ApiError(400, "username else email is required");
+  }
+
+  if(!password){
+    throw new ApiError(400,"password is required")
+  }
+  const isExistaceUser = await user.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!isExistaceUser) {
+    throw new ApiError(400, "user not found");
+  }
+
+  // check password
+
+  const checkPassword = await isExistaceUser.comparePassword(password);
+  
+  if(!checkPassword){
+    throw new ApiError(400,"password is wrong")
+  }
+  res.send("ok");
+});
 
 export { userRegister, logIn };
