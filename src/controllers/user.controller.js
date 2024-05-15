@@ -38,19 +38,12 @@ const userRegister = asyncHandler(async (req, res, next) => {
   }
 
   const avatarImage = req?.files?.avtar?.[0]?.path;
-  // const coverImage = req?.files?.coverAvtar?.[0]?.path;
+  const coverImage = req?.files?.coverAvtar?.[0]?.path;
 
-  let coverImageLocalPath;
-  if (
-    req.files &&
-    Array.isArray(req.files.coverImage) &&
-    req.files.coverImage.length > 0
-  ) {
-    coverImageLocalPath = req.files.coverImage[0].path || "";
-  }
+  console.log(coverImage);
 
   const uploadAvtarImage = await uploadLocalFile(avatarImage);
-  const uploadCoverImage = await uploadLocalFile(coverImageLocalPath);
+  const uploadCoverImage = await uploadLocalFile(coverImage);
   if (!uploadAvtarImage) {
     throw new ApiError(400, "avatar image is required");
   }
@@ -59,7 +52,7 @@ const userRegister = asyncHandler(async (req, res, next) => {
     email: email?.trim()?.toLowerCase(),
     username: username?.trim()?.toLowerCase(),
     avtar: uploadAvtarImage.url,
-    coverAvtar: uploadCoverImage.url,
+    coverAvtar: uploadCoverImage.url || "",
     password,
   };
 
