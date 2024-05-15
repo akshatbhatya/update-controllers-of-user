@@ -6,14 +6,12 @@ import uploadLocalFile from "../utils/cloudinary.js";
 
 const generateTokens = async (userId) => {
   try {
-    const tokens = await user.findById(userId);
-    const GeneratedAccessToken = await tokens.generateAccessToken();
-    const GeneratedRefreshToken = await tokens.generateRefreshToken();
-
-    await tokens.save({ saveBeforeValidate: false });
-    tokens.refreshToken = GeneratedRefreshToken;
-
-    return { GeneratedAccessToken, GeneratedRefreshToken };
+    const currentUser = await user.findById(userId);
+    const accessToken = await currentUser.generateAccessToken();
+    const refreshToken = await currentUser.generateRefreshToken();
+    currentUser.refreshToken = refreshToken;
+    await currentUser.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(500, "token can't be generated");
   }
@@ -21,7 +19,7 @@ const generateTokens = async (userId) => {
 
 const userRegister = asyncHandler(async (req, res, next) => {
   const { username, email, fullName, avtar, coverAvtar, password } = req.body;
-  console.log(username);
+
   //   check fields
 
   if (
@@ -39,10 +37,20 @@ const userRegister = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "user is already register");
   }
 
-  const avatarImage = req?.files?.avtar[0]?.path;
-  const coverImage = req?.files?.coverAvtar[0]?.path;
+  const avatarImage = req?.files?.avtar?.[0]?.path;
+  // const coverImage = req?.files?.coverAvtar?.[0]?.path;
+
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path || "";
+  }
+
   const uploadAvtarImage = await uploadLocalFile(avatarImage);
-  const uploadCoverImage = await uploadLocalFile(coverImage);
+  const uploadCoverImage = await uploadLocalFile(coverImageLocalPath);
   if (!uploadAvtarImage) {
     throw new ApiError(400, "avatar image is required");
   }
@@ -51,7 +59,7 @@ const userRegister = asyncHandler(async (req, res, next) => {
     email: email?.trim()?.toLowerCase(),
     username: username?.trim()?.toLowerCase(),
     avtar: uploadAvtarImage.url,
-    coverAvtar: uploadCoverImage.url || "",
+    coverAvtar: uploadCoverImage.url,
     password,
   };
 
@@ -66,7 +74,6 @@ const userRegister = asyncHandler(async (req, res, next) => {
 
 const logIn = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
-  console.log(username, email, password);
 
   if (!(username || email)) {
     throw new ApiError(400, "username else email is required");
@@ -90,7 +97,7 @@ const logIn = asyncHandler(async (req, res) => {
   if (!checkPassword) {
     throw new ApiError(400, "password is wrong");
   }
-  const { GeneratedAccessToken, GeneratedRefreshToken } = await generateTokens(
+  const { accessToken, refreshToken } = await generateTokens(
     isExistaceUser._id
   );
 
@@ -104,15 +111,13 @@ const logIn = asyncHandler(async (req, res) => {
   };
   return res
     .status(200)
-    .cookie("accessToken", GeneratedAccessToken, httpOptions)
-    .cookie("refreshToken", GeneratedRefreshToken, httpOptions)
+    .cookie("accessToken", accessToken, httpOptions)
+    .cookie("refreshToken", refreshToken, httpOptions)
     .json(
       new ApiResponse(200, "user logged in sucessfully", {
-        data: {
-          logInedUser,
-          GeneratedAccessToken,
-          GeneratedRefreshToken,
-        },
+        data: logInedUser,
+        accessToken,
+        refreshToken,
       })
     );
 });
