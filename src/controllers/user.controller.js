@@ -115,4 +115,6 @@ const logIn = asyncHandler(async (req, res) => {
     );
 });
 
-export { userRegister, logIn };
+const logOut = asyncHandler(async (req, res) => {});
+
+export { userRegister, logIn, logOut };
