@@ -1,8 +1,10 @@
 import asyncHandler from "../utils/asyncHandeller.js";
-import { user } from "../models/user.model.js";
+import { user, user } from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import uploadLocalFile from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
+import { user } from "../models/user.model.js";
 
 const generateTokens = async (userId) => {
   try {
@@ -139,4 +141,46 @@ const logOut = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", httpOptions)
     .json(new ApiResponse(200, "user loged out", {}));
 });
-export { userRegister, logIn, logOut };
+
+const refreshTokenEndPoint = asyncHandler(async (req, res) => {
+  try {
+    const incomingToken = req.cookies.refreshToken;
+    if (!incomingToken) {
+      throw new ApiError(404, "no token is found at end point");
+    }
+    const decodedToken = await jwt.verify(
+      incomingToken,
+      process.env.REFRESH_TOKEN
+    );
+    if (!decodedToken) {
+      throw new ApiError(400, "unauthorized token");
+    }
+    let User = await user.findById(decodedToken?._id);
+    if (!User) {
+      throw new ApiError(400, "token id is not found");
+    }
+    if (incomingToken !== User.refreshToken) {
+      throw new ApiError(400, "your token is wrong not matched");
+    }
+    const httpOptions = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, refreshToken } = await generateTokens(User._id);
+
+    return res
+      .status(200)
+      .cookie("refreshToken", accessToken, httpOptions)
+      .cookie("accessToken", accessToken, httpOptions)
+      .json(
+        new ApiResponse(200, "endpoint token generated successfully", {
+          accessToken,
+          refreshToken,
+        })
+      );
+  } catch (error) {
+    throw new ApiError(500, error.message);
+  }
+});
+export { userRegister, logIn, logOut, refreshTokenEndPoint };

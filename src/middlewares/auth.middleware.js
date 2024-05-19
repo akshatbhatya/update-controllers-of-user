@@ -9,8 +9,8 @@ asyncHandler(async (req, res, next) => {
       throw new ApiError(400, " there is no access token here");
     }
     let veriFiedToken = jwt.verify(TokenuserId, process.env.ACCESS_TOKEN);
-    if(!veriFiedToken){
-        throw new ApiError(400,"unauthorized request")
+    if (!veriFiedToken) {
+      throw new ApiError(400, "unauthorized request");
     }
     let generatedUser = await user
       .findById(veriFiedToken._id)

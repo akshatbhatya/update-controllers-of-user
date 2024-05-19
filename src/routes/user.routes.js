@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { userRegister } from "../controllers/user.controller.js";
+import {
+  refreshTokenEndPoint,
+  userRegister,
+} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import { logIn } from "../controllers/user.controller.js";
 import { logOut } from "../controllers/user.controller.js";
@@ -21,4 +24,5 @@ router.route("/register").post(
 
 router.route("/login").post(logIn);
 router.route("/logout").post(logOut);
+router.route("/refreshtoken").post(refreshTokenEndPoint);
 export { router };
