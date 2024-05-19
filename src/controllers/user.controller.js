@@ -117,7 +117,7 @@ const logIn = asyncHandler(async (req, res) => {
 
 const logOut = asyncHandler(async (req, res) => {
   let currentUser = req.user;
-  let userData = await user.findByIdAndUpdate(
+  await user.findByIdAndUpdate(
     currentUser._id,
     {
       $set: {
@@ -139,5 +139,4 @@ const logOut = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", httpOptions)
     .json(new ApiResponse(200, "user loged out", {}));
 });
-
 export { userRegister, logIn, logOut };
